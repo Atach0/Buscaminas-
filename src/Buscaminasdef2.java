@@ -8,7 +8,7 @@ import java.awt.*;
 
 /**
  *
- * @author Thony
+ * @author Santiago, Fernando y Anthony
  */
 public class Buscaminasdef2 {
 
