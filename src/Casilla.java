@@ -5,7 +5,7 @@
 
 /**
  *
- * @author refun
+ * @author Santiago, Fernando y Anthony
  */
 public class Casilla {
     private int posFila;
