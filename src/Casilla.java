@@ -2,64 +2,60 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+package buscaminasdef;
 
 /**
  *
  * @author Santiago, Fernando y Anthony
  */
 public class Casilla {
-    private int posFila;
-    private int posColumna;
-    private boolean mina;
+    private int fila;
+    private int columna;
+    private boolean esMina;
+    private boolean estaMarcada;
+    private boolean estaRevelada;
 
-    public Casilla(int posFila, int posColumna) {
-        this.posFila = posFila;
-        this.posColumna = posColumna;
-    }
-    
-    
-
-    /**
-     * @return the posFila
-     */
-    public int getPosFila() {
-        return posFila;
+    public Casilla(int fila, int columna) {
+        this.fila = fila;
+        this.columna = columna;
+        this.esMina = false;
+        this.estaMarcada = false;
+        this.estaRevelada = false;
     }
 
-    /**
-     * @param posFila the posFila to set
-     */
-    public void setPosFila(int posFila) {
-        this.posFila = posFila;
+    public int getFila() {
+        return fila;
     }
 
-    /**
-     * @return the posColumna
-     */
-    public int getPosColumna() {
-        return posColumna;
+    public int getColumna() {
+        return columna;
     }
 
-    /**
-     * @param posColumna the posColumna to set
-     */
-    public void setPosColumna(int posColumna) {
-        this.posColumna = posColumna;
+    public boolean esMina() {
+        return esMina;
     }
 
-    /**
-     * @return the mina
-     */
-    public boolean isMina() {
-        return mina;
+    public void colocarMina() {
+        this.esMina = true;
     }
 
-    /**
-     * @param mina the mina to set
-     */
-    public void setMina(boolean mina) {
-        this.mina = mina;
+    public boolean estaMarcada() {
+        return estaMarcada;
     }
-   
-    
+
+    public void marcar() {
+        this.estaMarcada = true;
+    }
+
+    public void desmarcar() {
+        this.estaMarcada = false;
+    }
+
+    public boolean estaRevelada() {
+        return estaRevelada;
+    }
+
+    public void revelar() {
+        this.estaRevelada = true;
+    }
 }
