@@ -5,7 +5,7 @@
 
 /**
  *
- * @author Santiago Atacho
+ * @author Santiago, Fernando y Anthony
  */
 public final class Tablero {
     Casilla [][] casillas;
