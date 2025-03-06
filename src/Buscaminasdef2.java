@@ -2,16 +2,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
-package buscaminasdef2;
+package buscaminasdef;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  *
  * @author Santiago, Fernando y Anthony
  */
-public class Buscaminasdef2 {
-
+public class Buscaminas {
+    
     /**
      * @param args the command line arguments
      */
@@ -19,46 +21,57 @@ public class Buscaminasdef2 {
     private JPanel panelTablero;
     private JPanel panelConfiguracion;
     private JButton[][] botones;
-    private int filas;
-    private int columnas;
-    private int minas;
-    private boolean[][] tableroMinas;
-    private int[][] listaMinas;
-    private int indiceMinas;
-    private boolean useBFS = true;
+    private Tablero tablero;
+    private boolean usarBFS;
 
-    public Buscaminasdef2(int filas, int columnas, int minas) {
-        this.filas = filas;
-        this.columnas = columnas;
-        this.minas = minas;
-        this.listaMinas = new int[minas][2];
-        this.indiceMinas = 0;
+    public Buscaminas(int filas, int columnas, int minas) {
+        this.tablero = new Tablero(filas, columnas, minas);
+        this.usarBFS = true; // Por defecto BFS
         inicializar();
+    }
+    
+    private void actualizarTablero() {
+        for (int i = 0; i < botones.length; i++) {
+            for (int j = 0; j < botones[i].length; j++) {
+                Casilla casilla = tablero.buscarCasilla(i, j);
+
+                if (casilla.estaRevelada()) {
+                    if (casilla.esMina()) {
+                        botones[i][j].setText("💣");
+                    } else {
+                        int minasAdyacentes = tablero.contarMinasAdyacentes(i, j);
+                        botones[i][j].setText(minasAdyacentes > 0 ? String.valueOf(minasAdyacentes) : "");
+                    }
+                } else if (casilla.estaMarcada()) {
+                    botones[i][j].setText("🚩"); // Bandera
+                } else {
+                    botones[i][j].setText(""); // Casilla sin revelar
+                }
+            }
+        }
     }
 
     private void inicializar() {
-        // Toda esta funcion es para inicializar la interfaz, usando el 
-        // java.swings
         frame = new JFrame("Buscaminas");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 600);
         frame.setLayout(new BorderLayout());
+        JButton btnGuardar = new JButton("Guardar");
+        JButton btnCargar = new JButton("Cargar");  
 
         panelConfiguracion = new JPanel();
         String[] opciones = {"10x10 (10 minas)", "18x18 (40 minas)", "24x24 (100 minas)"};
         JComboBox<String> selectorTamaño = new JComboBox<>(opciones);
         JButton btnIniciar = new JButton("Iniciar Juego");
-        JRadioButton bfsButton = new JRadioButton("BFS", true);
-        JRadioButton dfsButton = new JRadioButton("DFS");
-        ButtonGroup group = new ButtonGroup();
-        group.add(bfsButton);
-        group.add(dfsButton);
+        JRadioButton btnBFS = new JRadioButton("BFS", true);
+        JRadioButton btnDFS = new JRadioButton("DFS");
+        ButtonGroup grupoBusqueda = new ButtonGroup();
+        grupoBusqueda.add(btnBFS);
+        grupoBusqueda.add(btnDFS);
         
-        bfsButton.addActionListener(e -> useBFS = true);
-        dfsButton.addActionListener(e -> useBFS = false);
-        
-        // Aca es donde sale el boton donde hay 3 opciones para elegir 
-        // cualquiera de las 3 dificultades
+        btnBFS.addActionListener(e -> usarBFS = true);
+        btnDFS.addActionListener(e -> usarBFS = false);
+
         btnIniciar.addActionListener(e -> {
             String seleccion = (String) selectorTamaño.getSelectedItem();
             if (seleccion != null) {
@@ -76,14 +89,25 @@ public class Buscaminasdef2 {
             }
         });
         
+        btnGuardar.addActionListener(e -> guardadoYCarga.guardarPartida(tablero));
+        btnCargar.addActionListener(e -> {
+            Tablero tableroCargado = guardadoYCarga.cargarPartida();
+            if (tableroCargado != null) {
+                tablero = tableroCargado;
+                actualizarTablero();
+            }
+        });
+
+        panelConfiguracion.add(btnGuardar);
+        panelConfiguracion.add(btnCargar);
+
         panelConfiguracion.add(new JLabel("Seleccione tamaño: "));
         panelConfiguracion.add(selectorTamaño);
-        panelConfiguracion.add(bfsButton);
-        panelConfiguracion.add(dfsButton);
+        panelConfiguracion.add(btnBFS);
+        panelConfiguracion.add(btnDFS);
         panelConfiguracion.add(btnIniciar);
         frame.add(panelConfiguracion, BorderLayout.NORTH);
-        
-        // Dependiendo de cual elegiste, aca te crea el nuevo tablero
+
         panelTablero = new JPanel();
         frame.add(panelTablero, BorderLayout.CENTER);
         
@@ -91,106 +115,69 @@ public class Buscaminasdef2 {
     }
 
     private void iniciarJuego(int filas, int columnas, int minas) {
-        this.filas = filas;
-        this.columnas = columnas;
-        this.minas = minas;
-        this.tableroMinas = new boolean[filas][columnas];
-        this.listaMinas = new int[minas][2];
-        this.indiceMinas = 0;
-        
+        tablero = new Tablero(filas, columnas, minas);
         panelTablero.removeAll();
         panelTablero.setLayout(new GridLayout(filas, columnas));
         botones = new JButton[filas][columnas];
 
-        colocarMinas();
-
-        // En este for se evaluara las casillas donde el usuario de click
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 JButton boton = new JButton();
                 boton.setPreferredSize(new Dimension(30, 30));
                 final int x = i;
                 final int y = j;
-                boton.addActionListener(e -> manejarClick(x, y));
+
+                // Captura de clic izquierdo y derecho
+                boton.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (SwingUtilities.isRightMouseButton(e)) {
+                            manejarClick(x, y, true); // Clic derecho para marcar/desmarcar
+                        } else {
+                            manejarClick(x, y, false); // Clic izquierdo para revelar
+                        }
+                    }
+                });
+
                 botones[i][j] = boton;
                 panelTablero.add(boton);
             }
-        }
-        
-        panelTablero.revalidate();
-        panelTablero.repaint();
     }
 
-    private void colocarMinas() {
-        // En esta funcion se colocara las minas de forma aleatoria
-        while (indiceMinas < minas) {
-            int x = (int) (Math.random() * filas);
-            int y = (int) (Math.random() * columnas);
-            
-            if (!existeMina(x, y)) {
-                tableroMinas[x][y] = true;
-                listaMinas[indiceMinas][0] = x;
-                listaMinas[indiceMinas][1] = y;
-                indiceMinas++;
-            }
-        }
-    }
-
-    private boolean existeMina(int x, int y) {
-        for (int i = 0; i < indiceMinas; i++) {
-            if (listaMinas[i][0] == x && listaMinas[i][1] == y) {
-                return true;
-            }
-        }
-        return false;
+    panelTablero.revalidate();
+    panelTablero.repaint();
     }
     
-    private void manejarClick(int x, int y) {
-        // En este if evaluamos si hay una bomba en la mina que se da click
-        if (tableroMinas[x][y]) {
-            botones[x][y].setText("💣"); // Mina encontrada
-            JOptionPane.showMessageDialog(frame, "¡Has perdido!");
+    private void manejarClick(int x, int y, boolean esClickDerecho) {
+        if (esClickDerecho) {
+            // Marcar o desmarcar casilla
+            tablero.marcarCasilla(x, y);
+            botones[x][y].setText(tablero.estaMarcada(x, y) ? "🚩" : "");
         } else {
-            // Esta parte falta terminarla con el BFS o DFS
-            int minasAdyacentes = contarMinasAdyacentes(x, y);
-            botones[x][y].setText(minasAdyacentes > 0 ? String.valueOf(minasAdyacentes) : "");
-            if (minasAdyacentes == 0) {
-                if (useBFS) {
-                    realizarBarridoBFS(x, y);
-                } else {
-                    realizarBarridoDFS(x, y);
+            // No permitir barrer casilla si está marcada
+            if (tablero.estaMarcada(x, y)) return;
+
+            if (tablero.esMina(x, y)) {
+                botones[x][y].setText("💣");
+                JOptionPane.showMessageDialog(frame, "¡Has perdido!");
+            } else {
+                int minasAdyacentes = tablero.contarMinasAdyacentes(x, y);
+                botones[x][y].setText(minasAdyacentes > 0 ? String.valueOf(minasAdyacentes) : "");
+
+                if (minasAdyacentes == 0) {
+                    Busqueda.barrer(tablero, x, y, usarBFS);
                 }
             }
-        }
-    }
-    
-    private int contarMinasAdyacentes(int x, int y) {
-        // Esta funcion simplemente en caso que no exista mina, te dira cuantas tiene cerca
-        int contador = 0;
-        int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
-        int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
-        
-        // En este caso al rededor de una casilla solo hay 8 casillas
-        for (int i = 0; i < 8; i++) {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
-            if (nx >= 0 && nx < filas && ny >= 0 && ny < columnas && tableroMinas[nx][ny]) {
-                contador++;
+
+            // Verificar si el jugador ha ganado
+            if (tablero.todasMinasMarcadas()) {
+                JOptionPane.showMessageDialog(frame, "¡Felicidades, has ganado!");
             }
         }
-        return contador;
     }
 
-    private void realizarBarridoBFS(int x, int y) {
-        // Acá implementaremos el de BFS
-    }
-
-    private void realizarBarridoDFS(int x, int y) {
-        // Acá implementaremos el de DFS 
-    }    
-    
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Buscaminasdef2(10, 10, 10));
+        SwingUtilities.invokeLater(() -> new Buscaminas(10, 10, 10));
     }
     
 }
