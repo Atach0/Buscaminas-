@@ -36,6 +36,13 @@ public class Tablero {
         colocarMinas(minas);
     }
     
+    public void marcarCasilla(int x, int y, boolean marcada) {
+        if (casillas[x][y].estaRevelada()) {
+            return; // No se puede marcar una casilla ya descubierta
+        }
+        casillas[x][y].setMarcada(marcada);
+    }  
+    
     public Casilla buscarCasilla(int fila, int columna) {
         if (fila >= 0 && fila < casillas.length && columna >= 0 && columna < casillas[0].length) {
             return casillas[fila][columna];
@@ -60,6 +67,12 @@ public class Tablero {
         if (estado.equals("M")) casilla.colocarMina();
         if (estado.equals("B")) casilla.marcar();
         if (estado.equals("R")) casilla.revelar();
+    }
+    
+    public void descubrirCasilla(int x, int y) {
+        if (x >= 0 && x < filas && y >= 0 && y < columnas) {
+            casillas[x][y].setDescubierta(true);
+        }
     }
     
     private void colocarMinas(int cantidadMinas) {
@@ -135,12 +148,22 @@ public class Tablero {
         }
         return minasMarcadas == minas;
     }
+    
+    public boolean verificarVictoria() {
+        for (int i = 0; i < filas; i++) {
+            for (int j = 0; j < columnas; j++) {
+                Casilla casilla = casillas[i][j];
+                if (!casilla.esMina() && !casilla.estaRevelada()) {
+                    return false; // Aún hay casillas sin descubrir
+                }
+            }
+        }
+        return true; // Todas las casillas sin minas están descubiertas
+    }
 
     public boolean esMina(int x, int y) {
         return esMina[x][y];
     }
-    
-    
 
     public int getFilas() {
         return filas;
@@ -148,6 +171,10 @@ public class Tablero {
 
     public int getColumnas() {
         return columnas;
+    }
+    
+    public Casilla getCasilla(int x, int y) {
+        return casillas[x][y]; // Devuelve la casilla en la posición (x, y)
     }
 }
 
