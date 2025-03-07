@@ -5,6 +5,8 @@
 package buscaminasdef;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -23,6 +25,12 @@ public class Buscaminas {
     private JButton[][] botones;
     private Tablero tablero;
     private boolean usarBFS;
+    private JLabel labelMinasRestantes;
+    private JLabel labelTiempo;
+    private Timer timer;
+    private int segundos; // Contador de tiempo restante
+    private int minasRestantes; // Contador de minas restantes
+    private boolean juegoEnCurso;
 
     public Buscaminas(int filas, int columnas, int minas) {
         this.tablero = new Tablero(filas, columnas, minas);
@@ -58,6 +66,8 @@ public class Buscaminas {
         frame.setLayout(new BorderLayout());
         JButton btnGuardar = new JButton("Guardar");
         JButton btnCargar = new JButton("Cargar");  
+        labelMinasRestantes = new JLabel("Minas restantes: 0");
+        labelTiempo = new JLabel("Tiempo: 0s");
 
         panelConfiguracion = new JPanel();
         String[] opciones = {"10x10 (10 minas)", "18x18 (40 minas)", "24x24 (100 minas)"};
@@ -100,7 +110,8 @@ public class Buscaminas {
 
         panelConfiguracion.add(btnGuardar);
         panelConfiguracion.add(btnCargar);
-
+        panelConfiguracion.add(labelMinasRestantes);
+        panelConfiguracion.add(labelTiempo);
         panelConfiguracion.add(new JLabel("Seleccione tamaño: "));
         panelConfiguracion.add(selectorTamaño);
         panelConfiguracion.add(btnBFS);
@@ -119,7 +130,21 @@ public class Buscaminas {
         panelTablero.removeAll();
         panelTablero.setLayout(new GridLayout(filas, columnas));
         botones = new JButton[filas][columnas];
+        minasRestantes = minas;
+        labelMinasRestantes.setText("Minas restantes: " + minasRestantes);
+        segundos = 0;
+        labelTiempo.setText("Tiempo: 0s");
+        juegoEnCurso = true;
 
+        if (timer != null) {
+            timer.stop();
+        }
+        iniciarTemporizador();
+
+        panelTablero.removeAll();
+        panelTablero.setLayout(new GridLayout(filas, columnas));
+        botones = new JButton[filas][columnas];
+        
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 JButton boton = new JButton();
@@ -149,29 +174,134 @@ public class Buscaminas {
     }
     
     private void manejarClick(int x, int y, boolean esClickDerecho) {
+        if (!juegoEnCurso) return;
+        
         if (esClickDerecho) {
             // Marcar o desmarcar casilla
             tablero.marcarCasilla(x, y);
             botones[x][y].setText(tablero.estaMarcada(x, y) ? "🚩" : "");
+            
         } else {
             // No permitir barrer casilla si está marcada
             if (tablero.estaMarcada(x, y)) return;
 
             if (tablero.esMina(x, y)) {
+                // Mostrar todas las minas al perder
+                mostrarMinas();
                 botones[x][y].setText("💣");
-                JOptionPane.showMessageDialog(frame, "¡Has perdido!");
+                botones[x][y].setForeground(Color.RED); // Color rojo para la mina
+                timer.stop();
+                juegoEnCurso = false;
+                JOptionPane.showMessageDialog(frame, "¡Has perdido! Inicia una nueva partida");
+                
+                // Deshabilitar todas las casillas
+                bloquearTablero();
+                return;
             } else {
                 int minasAdyacentes = tablero.contarMinasAdyacentes(x, y);
                 botones[x][y].setText(minasAdyacentes > 0 ? String.valueOf(minasAdyacentes) : "");
-
+                
+                if (minasAdyacentes > 0) {
+                    botones[x][y].setText(String.valueOf(minasAdyacentes));
+                    botones[x][y].setForeground(obtenerColorNumero(minasAdyacentes));
+                } else {
+                    botones[x][y].setText("");
+                    Busqueda.barrer(tablero, x, y, usarBFS);
+                }
+                botones[x][y].setEnabled(false);
+                tablero.descubrirCasilla(x, y);
+                
                 if (minasAdyacentes == 0) {
                     Busqueda.barrer(tablero, x, y, usarBFS);
                 }
             }
 
-            // Verificar si el jugador ha ganado
+            verificarVictoria(); // Llamamos a la verificación de victoria 
+                                 // si el usuario selecciono todas las casillas sin minas
+            
+            // Verificar si el jugador ha ganado marcando todas las minas
             if (tablero.todasMinasMarcadas()) {
                 JOptionPane.showMessageDialog(frame, "¡Felicidades, has ganado!");
+            }
+            
+            // Verificar victoria
+            if (tablero.verificarVictoria()) {
+                timer.stop();
+                juegoEnCurso = false;
+                JOptionPane.showMessageDialog(frame, "¡Has ganado en " + segundos + " segundos!");
+            }
+        }
+    }
+    
+    private void iniciarTemporizador() {
+        timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                segundos++;
+                labelTiempo.setText("Tiempo: " + segundos + "s");
+            }
+        });
+        timer.start();
+    }
+    
+    private void manejarBandera(int x, int y) {
+        if (!juegoEnCurso) return;
+
+        if (tablero.estaMarcada(x, y)) {
+            tablero.marcarCasilla(x, y, false);
+            botones[x][y].setText("");
+            minasRestantes++;
+        } else {
+            tablero.marcarCasilla(x, y, true);
+            botones[x][y].setText("🚩");
+            minasRestantes--;
+        }
+        labelMinasRestantes.setText("Minas restantes: " + minasRestantes);
+    }
+    
+    // Método para obtener el color según el número
+    private Color obtenerColorNumero(int numero) {
+        switch (numero) {
+            case 1: return Color.BLUE;
+            case 2: return Color.GREEN;
+            case 3: return Color.RED;
+            case 4: return Color.MAGENTA;
+            case 5: return Color.ORANGE;
+            case 6: return Color.CYAN;
+            case 7: return Color.BLACK;
+            case 8: return Color.GRAY;
+            default: return Color.BLACK;
+        }
+    }
+    
+    private void mostrarMinas() {
+        for (int i = 0; i < tablero.getFilas(); i++) {
+            for (int j = 0; j < tablero.getColumnas(); j++) {
+                if (tablero.esMina(i, j)) {
+                    botones[i][j].setText("💣");
+                }
+            }
+        }
+    }
+    
+    private void verificarVictoria() {
+        for (int i = 0; i < tablero.getFilas(); i++) {
+            for (int j = 0; j < tablero.getColumnas(); j++) {
+                if (!tablero.esMina(i, j) && !tablero.estaMarcada(i, j)) {
+                    return; // Si hay casillas sin descubrir, aún no has ganado
+                }
+            }
+        }
+
+        // Si todas las casillas no minadas están descubiertas, has ganado
+        JOptionPane.showMessageDialog(frame, "¡Felicidades, has ganado!");
+        bloquearTablero(); // Bloquea el tablero para evitar más acciones
+    }
+    
+    private void bloquearTablero() {
+        for (int i = 0; i < botones.length; i++) {
+            for (int j = 0; j < botones[i].length; j++) {
+                botones[i][j].setEnabled(false);
             }
         }
     }
