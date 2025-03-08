@@ -24,17 +24,30 @@ public class guardadoYCarga {
         if (seleccion == JFileChooser.APPROVE_OPTION) {
             File archivo = fileChooser.getSelectedFile();
             
-            try (FileWriter escritor = new FileWriter(archivo)) {
-                int filas = tablero.getFilas();
-                int columnas = tablero.getColumnas();
+            try (FileWriter escritor = new FileWriter(archivo)){
+                // Escribe las dimensiones del tablero y el número de minas
+                escritor.write(
+                tablero.getFilas() + "," + tablero.getColumnas() + "," 
+                + tablero.getMinas() + "\n"
+                );
+                
+                // Escribe la matriz de minas (1 si es mina, 0 si no lo es)
+                for (int i = 0; i < tablero.getFilas() ; i++) {
+                    for (int j = 0; j < tablero.getColumnas(); j ++) {
+                        escritor.write(tablero.esMina(i,j) ? "1" : "0");
+                        if (j < tablero.getColumnas() - 1) escritor.write(",");
+                    }
+                    escritor.write("\n");
+                }
                 
                 // Guardar dimensiones y número de minas
-                escritor.write(filas + "," + columnas + "\n");
+                //escritor.write(tablero.getFilas() + "," + tablero.getColumnas() + "\n");
                 
                 // Guardar el estado de cada casilla
-                for (int i = 0; i < filas; i++) {
-                    for (int j = 0; j < columnas; j++) {
-                        escritor.write(tablero.obtenerEstadoCasilla(i, j) + ",");
+                for (int i = 0; i < tablero.getFilas(); i++) {
+                    for (int j = 0; j < tablero.getColumnas(); j++) {
+                        escritor.write(tablero.obtenerEstadoCasilla(i, j) + (j 
+                                < tablero.getColumnas() - 1 ? "," : ""));
                     }
                     escritor.write("\n");
                 }
@@ -56,14 +69,24 @@ public class guardadoYCarga {
             File archivo = fileChooser.getSelectedFile();
             
             try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
-                // Leer dimensiones del tablero
-                String[] dimensiones = lector.readLine().split(",");
-                int filas = Integer.parseInt(dimensiones[0]);
-                int columnas = Integer.parseInt(dimensiones[1]);
+                // Leer dimensiones del tablero y las minitas
+                String[] datos = lector.readLine().split(",");
+                int filas = Integer.parseInt(datos[0]);
+                int columnas = Integer.parseInt(datos[1]);
+                int minas = Integer.parseInt(datos[2]);
                 
-                Tablero tablero = new Tablero(filas, columnas, 0); // Se creará sin minas
+                // Crea un nuevo tablero con las dimensiones y minas leídas
+                Tablero tablero = new Tablero(filas, columnas, minas);
                 
-                // Leer el estado de cada casilla
+                //lee la matriz esMina
+                for (int i = 0; i < filas; i++) {
+                    String[] minasFila = lector.readLine().split(",");
+                    for (int j = 0; j < columnas; j++) {
+                        tablero.setEsMina(i, j, minasFila[j].equals("1"));
+                    }
+                }
+                
+                // Lee el estado de cada casilla
                 for (int i = 0; i < filas; i++) {
                     String[] estados = lector.readLine().split(",");
                     for (int j = 0; j < columnas; j++) {
@@ -71,8 +94,12 @@ public class guardadoYCarga {
                     }
                 }
                 
-                JOptionPane.showMessageDialog(null, "Partida cargada correctamente.");
+                //Esto sincroniza las minas en Casilla
+                tablero.colocarMinasEnCasillas();
+                tablero.calcularMinasAdyacentes();
+                
                 return tablero;
+               
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, "Error al cargar la partida.");
             }
