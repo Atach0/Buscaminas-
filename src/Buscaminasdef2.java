@@ -13,16 +13,20 @@ import java.awt.event.MouseEvent;
 /**
  *
  * @author Santiago, Fernando y Anthony
+ * Clase principal que maneja la interfaz grafica del Buscaminas.
  */
 public class Buscaminas {
     
     /**
      * @param args the command line arguments
      */
+    // Componentes de la interfaz gráfica
     private JFrame frame;
     private JPanel panelTablero;
     private JPanel panelConfiguracion;
     private JButton[][] botones;
+    
+     // Variables de juego
     private Tablero tablero;
     private boolean usarBFS;
     private JLabel labelMinasRestantes;
@@ -32,25 +36,37 @@ public class Buscaminas {
     private int minasRestantes; // Contador de minas restantes
     private boolean juegoEnCurso;
 
+    /**
+     * Constructor de la clase Buscaminas.
+     * @param filas Número de filas del tablero.
+     * @param columnas Número de columnas del tablero.
+     * @param minas Número de minas en el tablero.
+     */
+    
     public Buscaminas(int filas, int columnas, int minas) {
         this.tablero = new Tablero(filas, columnas, minas);
         this.usarBFS = true; // Por defecto BFS
         inicializar();
     }
     
+    /**
+     * Actualiza la interfaz gráfica con el estado actual del tablero.
+     */
+    
     private void actualizarTablero() {
         for (int i = 0; i < botones.length; i++) {
             for (int j = 0; j < botones[i].length; j++) {
                 Casilla casilla = tablero.buscarCasilla(i, j);
 
-                if (casilla.estaRevelada()) {
+                if (casilla.revelada()) {
+                    botones[i][j].setEnabled(false);
                     if (casilla.esMina()) {
                         botones[i][j].setText("💣");
                     } else {
                         int minasAdyacentes = tablero.contarMinasAdyacentes(i, j);
                         botones[i][j].setText(minasAdyacentes > 0 ? String.valueOf(minasAdyacentes) : "");
                     }
-                } else if (casilla.estaMarcada()) {
+                } else if (casilla.marcada()) {
                     botones[i][j].setText("🚩"); // Bandera
                 } else {
                     botones[i][j].setText(""); // Casilla sin revelar
@@ -59,13 +75,22 @@ public class Buscaminas {
         }
     }
 
+    /**
+     * Inicializa la interfaz gráfica y configura los botones de inicio
+     * , guardar y cargar.
+     */
+    
     private void inicializar() {
         frame = new JFrame("Buscaminas");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 600);
         frame.setLayout(new BorderLayout());
+        
+        // Botones para guardar y cargar partidas
         JButton btnGuardar = new JButton("Guardar");
         JButton btnCargar = new JButton("Cargar");  
+        
+        // Labels para mostrar minas restantes y tiempo
         labelMinasRestantes = new JLabel("Minas restantes: 0");
         labelTiempo = new JLabel("Tiempo: 0s");
 
@@ -73,15 +98,19 @@ public class Buscaminas {
         String[] opciones = {"10x10 (10 minas)", "18x18 (40 minas)", "24x24 (100 minas)"};
         JComboBox<String> selectorTamaño = new JComboBox<>(opciones);
         JButton btnIniciar = new JButton("Iniciar Juego");
+        
+        // Botones para seleccionar BFS o DFS
         JRadioButton btnBFS = new JRadioButton("BFS", true);
         JRadioButton btnDFS = new JRadioButton("DFS");
         ButtonGroup grupoBusqueda = new ButtonGroup();
         grupoBusqueda.add(btnBFS);
         grupoBusqueda.add(btnDFS);
         
+        // Configurar eventos de selección
         btnBFS.addActionListener(e -> usarBFS = true);
         btnDFS.addActionListener(e -> usarBFS = false);
 
+        // Este es el evento para iniciar el juego.
         btnIniciar.addActionListener(e -> {
             String seleccion = (String) selectorTamaño.getSelectedItem();
             if (seleccion != null) {
@@ -99,6 +128,7 @@ public class Buscaminas {
             }
         });
         
+        // Estos son los eventos para guardar y cargar partidas
         btnGuardar.addActionListener(e -> guardadoYCarga.guardarPartida(tablero));
         btnCargar.addActionListener(e -> {
             Tablero tableroCargado = guardadoYCarga.cargarPartida();
@@ -108,6 +138,7 @@ public class Buscaminas {
             }
         });
 
+        // Agregar componentes al panel de configuración
         panelConfiguracion.add(btnGuardar);
         panelConfiguracion.add(btnCargar);
         panelConfiguracion.add(labelMinasRestantes);
@@ -173,6 +204,10 @@ public class Buscaminas {
     panelTablero.repaint();
     }
     
+    /**
+     * Maneja la lógica del clic en las casillas, revelando minas o realizando el barrido.
+     */
+    
     private void manejarClick(int x, int y, boolean esClickDerecho) {
         if (!juegoEnCurso) return;
         
@@ -213,8 +248,11 @@ public class Buscaminas {
                 
                 if (minasAdyacentes == 0) {
                     Busqueda.barrer(tablero, x, y, usarBFS);
+                    actualizarTablero();
                 }
+                
             }
+            
 
             verificarVictoria(); // Llamamos a la verificación de victoria 
                                  // si el usuario selecciono todas las casillas sin minas
@@ -232,6 +270,10 @@ public class Buscaminas {
             }
         }
     }
+    
+    /**
+     * Inicia el temporizador del juego.
+     */
     
     private void iniciarTemporizador() {
         timer = new Timer(1000, new ActionListener() {
@@ -284,6 +326,11 @@ public class Buscaminas {
         }
     }
     
+    
+    /**
+     * Verifica si el jugador ha ganado el juego.
+     */
+    
     private void verificarVictoria() {
         for (int i = 0; i < tablero.getFilas(); i++) {
             for (int j = 0; j < tablero.getColumnas(); j++) {
@@ -306,6 +353,10 @@ public class Buscaminas {
         }
     }
 
+    /**
+     * Método principal que ejecuta la aplicación.
+     */
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Buscaminas(10, 10, 10));
     }
