@@ -8,6 +8,10 @@ package buscaminasdef;
  *
  * @author Santiago, Fernando y Anthony
  */
+
+/**
+ * Clase Cola, barrer por BFS usa esta cola
+ */
 public class Cola {
     private Nodo primero, ultimo;
 
