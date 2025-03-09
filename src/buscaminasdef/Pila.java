@@ -8,6 +8,10 @@ package buscaminasdef;
  *
  * @author Santiago, Fernando y Anthony
  */
+
+/**
+ * Clase Pila, barrer por DFS usa esta pila
+ */
 public class Pila {
     private Nodo tope;
 
