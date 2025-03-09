@@ -14,6 +14,10 @@ import java.io.IOException;
  *
  * @author Santiago, Fernando y Anthony
  */
+
+/**
+ * Clase que representa el guardado y carga de las partidas
+ */
 public class guardadoYCarga {
     // Método para guardar la partida en un archivo CSV
     public static void guardarPartida(Tablero tablero) {
