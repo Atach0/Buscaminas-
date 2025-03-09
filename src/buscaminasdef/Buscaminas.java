@@ -15,6 +15,10 @@ import java.awt.event.MouseEvent;
  * @author Santiago, Fernando y Anthony
  * Clase principal que maneja la interfaz grafica del Buscaminas.
  */
+
+/**
+ * Main del buscaminas
+ */
 public class Buscaminas {
     
     /**
