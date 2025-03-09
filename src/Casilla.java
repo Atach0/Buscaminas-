@@ -12,88 +12,42 @@ public class Casilla {
     private int fila;
     private int columna;
     private boolean esMina;
-    private boolean estaMarcada;
     private boolean marcada;
-    private boolean estaRevelada;
-    private boolean descubierta;
+    private boolean revelada;
 
     public Casilla(int fila, int columna) {
         this.fila = fila;
         this.columna = columna;
         this.esMina = false;
-        this.estaMarcada = false;
-        this.marcada = marcada;
-        this.estaRevelada = false;
+        this.marcada = false;
+        this.revelada = false;
     }
 
-    public int getFila() {
-        return fila;
-    }
+   public boolean revelada(){
+       return this.revelada;
+   }
+   
+   public void revelar(){
+       this.revelada = true;
+   }
+   
+   public boolean marcada(){
+       return this.marcada;
+   }
+   public void setMarcada(boolean marcada){
+       this.marcada = marcada;
+   }
+   
+   public void marcar(){
+       this.marcada = !this.marcada;
+   }
+   
+   public boolean esMina(){
+       return esMina;
+   }
+   
+   public void colocarMina(){
+       this.esMina = true;
+   }
 
-    public int getColumna() {
-        return columna;
-    }
-
-    public boolean esMina() {
-        return esMina;
-    }
-
-    public void colocarMina() {
-        this.esMina = true;
-    }
-
-    public boolean estaMarcada() {
-        return estaMarcada;
-    }
-    
-    public boolean Marcada() {
-        return marcada;
-    }
-
-    public boolean isMarcada() {
-        return marcada;
-    }
-
-    public void setMarcada(boolean marcada) {
-        this.marcada = marcada;
-    }
-    
-    
-
-    public boolean isEstaMarcada() {
-        return estaMarcada;
-    }
-
-    public void setEstaMarcada(boolean estaMarcada) {
-        this.estaMarcada = estaMarcada;
-    }
-
-    public void marcar() {
-        this.estaMarcada = true;
-    }
-
-    public void desmarcar() {
-        this.estaMarcada = false;
-    }
-
-    public boolean estaRevelada() {
-        return estaRevelada;
-    }
-
-    public void setDescubierta(boolean descubierta) {
-        this.descubierta = descubierta;
-    }
-    
-    public boolean isEstaRevelada() {
-        return estaRevelada;
-    }
-
-    public void setEstaRevelada(boolean estaRevelada) {
-        this.estaRevelada = estaRevelada;
-    }
-
-    public void revelar() {
-        this.estaRevelada = true;
-    }
 }
-
