@@ -8,6 +8,10 @@ package buscaminasdef;
  *
  * @author Santiago, Fernando y Anthony
  */
+
+/**
+ * Clase que las casillas y las minas
+ */
 public class Casilla {
     private int fila;
     private int columna;
