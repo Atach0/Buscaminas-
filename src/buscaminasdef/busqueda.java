@@ -8,6 +8,10 @@ package buscaminasdef;
  *
  * @author Santiago, Fernando y Anthony
  */
+
+/**
+ * Clase que representa el barrido usando BFS y DFS
+ */
 public class Busqueda {
     
     /**
